@@ -1,0 +1,34 @@
+{
+  "name": "tropkcab",
+  "version": "1.0.0",
+  "description": "A GitHub action for backporting PRs",
+  "main": "out/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ewanharris/backporty"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts",
+    "package": "ncc build --source-map",
+    "test": "jest"
+  },
+  "author": "Ewan Harris",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/exec": "^1.0.4",
+    "@actions/github": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.19",
+    "@types/node": "^14.14.14",
+    "@typescript-eslint/eslint-plugin": "^4.11.0",
+    "@typescript-eslint/parser": "^4.11.0",
+    "@vercel/ncc": "^0.26.1",
+    "jest": "^26.6.3",
+    "jest-circus": "^26.6.3",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4.1.3"
+  }
+}
