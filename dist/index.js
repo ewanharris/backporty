@@ -7314,7 +7314,7 @@ function handleMerge(payload, args) {
                     title: backportTitle
                 });
                 // Copy over any labels
-                if (labels === null || labels === void 0 ? void 0 : labels.length) {
+                if (labelsToCopy === null || labelsToCopy === void 0 ? void 0 : labelsToCopy.length) {
                     core_1.info('Copying labels');
                     yield github.issues.addLabels({
                         issue_number: createdPr.number,

@@ -90,7 +90,7 @@ export async function handleMerge (payload: EventPayloads.WebhookPayloadPullRequ
 			});
 
 			// Copy over any labels
-			if (labels?.length) {
+			if (labelsToCopy?.length) {
 				info('Copying labels');
 				await github.issues.addLabels({
 					issue_number: createdPr.number,
