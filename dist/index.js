@@ -7653,7 +7653,7 @@ const core = __importStar(__webpack_require__(2186));
 function validateArgs() {
     const args = {
         username: core.getInput('username', { required: true }),
-        ghToken: core.getInput('gh_token', { required: true })
+        ghToken: core.getInput('github_token', { required: true })
     };
     return args;
 }
