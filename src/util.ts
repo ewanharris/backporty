@@ -1,4 +1,4 @@
-import core from '@actions/core';
+import * as core from '@actions/core';
 import { ActionArguments } from './interfaces';
 
 export function validateArgs(): ActionArguments {
