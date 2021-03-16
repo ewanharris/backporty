@@ -9,6 +9,7 @@ async function run(): Promise<void> {
 		const args = validateArgs();
 
 		switch (context.eventName) {
+			case 'pull_request_target':
 			case 'closed':
 				core.info('Handling close event');
 				await handleMerge(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
