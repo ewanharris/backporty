@@ -10,7 +10,7 @@ module.exports = {
 		'plugin:@typescript-eslint/recommended',
 	],
 	rules: {
-		indent: [ 'error', 'tab' ],
+		indent: [ 'error', 'tab', { SwitchCase: 1 } ],
 		semi: [ 'error', 'always']
 	}
 };

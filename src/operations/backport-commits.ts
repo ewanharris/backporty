@@ -1,0 +1,47 @@
+import { group, warning } from '@actions/core';
+import { exec } from '@actions/exec';
+import path from 'path';
+import { promises as fs } from 'fs';
+import { BackportCommitsOptions } from '../interfaces';
+
+/**
+ * Creates a backport PR for each branch requested. Performing the following actions:
+ * 1. Ensure the git repo is up to date
+ * 2. Checkout the base branch from the origin repository
+ * 3. Checkout the branch that will be PR'd from
+ * 4. Apply the patches in order, using `git an -3 --ignore-whitespace <patch_file>`
+ * 5. Push the branch, create a PR
+ * 6. Copy across any non-backport labels
+ * 7. Remove the backport label on the original PR
+ *
+ * @param backports - Branches to backport to
+ * @param patches - Array of patches to be applied
+ * @param options - Options
+ * @param github - A pre-configured octokit instance from `getOctokit`
+ */
+export async function backportCommits(backport: { base: string, head: string }, patches: string[], options: BackportCommitsOptions): Promise<void> {
+	const { base, head } = backport;
+
+	await group(`Backporting to ${base}`, async () => {
+		try {
+			await exec('git', [ 'fetch', 'origin' ]);
+			await exec('git', [ 'checkout', `origin/${base}` ]);
+			await exec('git', [ 'checkout', '-b', head ]);
+
+			const patchFile = path.join(__dirname, `${options.repo}.patch`);
+			for (const patch of patches) {
+				await fs.writeFile(patchFile, patch, 'utf8');
+				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ]);
+				await fs.unlink(patchFile);
+			}
+
+			if (options.push) {
+				await exec('git', [ 'push', 'botrepo', head ]);
+			}
+		} catch (error) {
+			warning(error);
+			await exec('git', [ 'am', '--abort' ]);
+			throw error;
+		}
+	});
+}

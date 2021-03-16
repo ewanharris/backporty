@@ -1,16 +1,21 @@
-import * as core from '@actions/core';
-import {wait} from './wait';
+import core from '@actions/core';
+import { context } from '@actions/github';
+import { EventPayloads } from '@octokit/webhooks';
+import { handleMerge } from './handlers/merge';
+import { validateArgs } from './util';
 
 async function run(): Promise<void> {
 	try {
-		const ms: string = core.getInput('milliseconds');
-		core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
+		const args = validateArgs();
 
-		core.debug(new Date().toTimeString());
-		await wait(parseInt(ms, 10));
-		core.debug(new Date().toTimeString());
-
-		core.setOutput('time', new Date().toTimeString());
+		switch (context.eventName) {
+			case 'closed':
+				await handleMerge(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
+				break;
+			default:
+				core.debug(`No handler for ${context.eventName}`);
+				break;
+		}
 	} catch (error) {
 		core.setFailed(error.message);
 	}
