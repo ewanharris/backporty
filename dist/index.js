@@ -7213,8 +7213,154 @@ function wrappy (fn, cb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LABEL_REGEXP = void 0;
+exports.STATUS_CHECK_PREFIX = exports.LABEL_REGEXP = void 0;
 exports.LABEL_REGEXP = /^backport ([^ ]+)(?: ([^ ]+))?$/;
+exports.STATUS_CHECK_PREFIX = 'Backportable?';
+
+
+/***/ }),
+
+/***/ 9876:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.handleBackportCheck = void 0;
+const core_1 = __webpack_require__(2186);
+const github_1 = __webpack_require__(5438);
+const constants_1 = __webpack_require__(7413);
+const backport_commits_1 = __webpack_require__(304);
+const clone_and_configure_1 = __webpack_require__(2946);
+const get_commits_1 = __webpack_require__(40);
+/**
+ * Handler for when a PR has been labeled for a backport and is still open. Will perform the following
+ *
+ * 1. Clone and configure the repository
+ * 2. Query for current status checks on PR
+ * 3. Query for current labels on PR
+ * 4. Determine backports that should be validated
+ * 5. Pull the commits from the PR, ignoring merge commits
+ * 6. Create or update status checks for each backport validation
+ * 7. Perform each backport validation
+ *  a. Backport the commits
+ *  b. Update the status check
+ *
+ *
+ *
+ */
+function handleBackportCheck(payload, args) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { labels, number, title } = payload.pull_request;
+        const { name: repo, owner: { login: owner } } = payload.repository;
+        const github = github_1.getOctokit(args.ghToken);
+        core_1.info('Checking for status check');
+        const { data: allStatusChecks } = yield github.checks.listForRef({
+            owner,
+            repo,
+            ref: payload.pull_request.head.sha
+        });
+        const backportStatusChecks = allStatusChecks.check_runs.filter(run => run.name.startsWith(constants_1.STATUS_CHECK_PREFIX));
+        const backports = [];
+        const statusChecks = [];
+        for (const label of labels) {
+            const matches = constants_1.LABEL_REGEXP.exec(label.name);
+            if (!matches) {
+                continue;
+            }
+            backports.push({
+                base: matches[1],
+                head: `backport-${number}-to-${matches[1]}`,
+                target: matches[1]
+            });
+            const statusCheckName = `${constants_1.STATUS_CHECK_PREFIX} ${matches[1]}`;
+            const existingCheck = backportStatusChecks.find(run => run.name === statusCheckName);
+            if (existingCheck) {
+                const { data: check } = yield github.checks.update({
+                    owner,
+                    repo,
+                    name: existingCheck.name,
+                    check_run_id: existingCheck.id,
+                    status: 'queued'
+                });
+                statusChecks.push(check);
+            }
+            else {
+                const { data: check } = yield github.checks.create({
+                    owner,
+                    repo,
+                    name: statusCheckName,
+                    status: 'queued',
+                    head_sha: payload.pull_request.head.sha
+                });
+                statusChecks.push(check);
+            }
+        }
+        if (!backports.length) {
+            return;
+        }
+        core_1.info(`Validating backporting of #${number}`);
+        yield clone_and_configure_1.cloneAndConfigure(args, owner, repo);
+        const commits = yield get_commits_1.getCommits(github, owner, repo, number);
+        const options = {
+            pullRequestNumber: number,
+            botRepo: args.username,
+            repo,
+            owner,
+            push: false
+        };
+        for (const backport of backports) {
+            const { base, head, target } = backport;
+            const checkName = `${constants_1.STATUS_CHECK_PREFIX} ${target}`;
+            const statusCheck = statusChecks.find(check => check.name === checkName);
+            try {
+                core_1.info('Backporting commits');
+                yield backport_commits_1.backportCommits(backport, commits, options);
+                if (!statusCheck) {
+                    continue;
+                }
+                core_1.info('Update check');
+                yield github.checks.update({
+                    repo,
+                    owner,
+                    check_run_id: statusCheck.id,
+                    conclusion: 'success',
+                    output: {
+                        title: 'Backport validated',
+                        summary: `This PR can be cleanly backported to "${target}"`
+                    }
+                });
+            }
+            catch (error) {
+                core_1.info('Update check when failed');
+                if (!statusCheck) {
+                    // uhoh
+                    continue;
+                }
+                yield github.checks.update({
+                    repo,
+                    owner,
+                    check_run_id: statusCheck.id,
+                    conclusion: 'neutral',
+                    output: {
+                        title: 'Backport failed',
+                        summary: `This PR can not be cleanly backported to "${target}"`
+                    }
+                });
+            }
+        }
+    });
+}
+exports.handleBackportCheck = handleBackportCheck;
 
 
 /***/ }),
@@ -7420,6 +7566,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(2186));
 const github_1 = __webpack_require__(5438);
+const backportCheck_1 = __webpack_require__(9876);
 const merge_1 = __webpack_require__(2903);
 const util_1 = __webpack_require__(6568);
 function run() {
@@ -7442,7 +7589,7 @@ function run() {
                         yield merge_1.handleMerge(github_1.context.payload, args);
                     }
                     else {
-                        // TODO: support testing the backport viability and reporting as a status check
+                        yield backportCheck_1.handleBackportCheck(github_1.context.payload, args);
                     }
                     break;
                 default:

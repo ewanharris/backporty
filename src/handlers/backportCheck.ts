@@ -135,7 +135,7 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 					title: 'Backport failed',
 					summary: `This PR can not be cleanly backported to "${target}"`
 				}
-			})
+			});
 		}
 	}
 
