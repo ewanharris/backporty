@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import { context } from '@actions/github';
 import { EventPayloads } from '@octokit/webhooks';
+import { handleBackportCheck } from './handlers/backportCheck';
 import { handleMerge } from './handlers/merge';
 import { validateArgs } from './util';
 
@@ -22,7 +23,7 @@ async function run(): Promise<void> {
 				if ((context.payload as EventPayloads.WebhookPayloadPullRequest).pull_request.merged) {
 					await handleMerge(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
 				} else {
-					// TODO: support testing the backport viability and reporting as a status check
+					await handleBackportCheck(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
 				}
 				break;
 			default:
