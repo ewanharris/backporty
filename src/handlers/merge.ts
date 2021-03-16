@@ -71,12 +71,14 @@ export async function handleMerge (payload: EventPayloads.WebhookPayloadPullRequ
 	for (const backport of backports) {
 		const { base, head } = backport;
 		try {
+			info('Backporting commits');
 			await backportCommits(backport, commits, options);
 
 			const body = `Backport of #${number}.\nSee that PR for full details.`;
 			const backportTitle = `[Backport ${base}] ${title}`;
 
 			// Create the PR
+			info('Creating PR');
 			const { data: createdPr } = await github.pulls.create({
 				base,
 				body,
@@ -89,6 +91,7 @@ export async function handleMerge (payload: EventPayloads.WebhookPayloadPullRequ
 
 			// Copy over any labels
 			if (labels?.length) {
+				info('Copying labels');
 				await github.issues.addLabels({
 					issue_number: createdPr.number,
 					labels: labelsToCopy,
@@ -98,6 +101,7 @@ export async function handleMerge (payload: EventPayloads.WebhookPayloadPullRequ
 			}
 
 			// Remove the backport <base> label
+			info('Removing backport request label');
 			await github.issues.removeLabel({
 				issue_number: options.pullRequestNumber,
 				name: `backport ${base}`,
@@ -105,7 +109,8 @@ export async function handleMerge (payload: EventPayloads.WebhookPayloadPullRequ
 				repo
 			});
 		} catch (error) {
-			debug(error);
+			info('errored');
+			info(error.message);
 			const errorMessage = error.message;
 	
 			await github.issues.createComment({

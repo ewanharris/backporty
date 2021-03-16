@@ -7298,10 +7298,12 @@ function handleMerge(payload, args) {
         for (const backport of backports) {
             const { base, head } = backport;
             try {
+                core_1.info('Backporting commits');
                 yield backport_commits_1.backportCommits(backport, commits, options);
                 const body = `Backport of #${number}.\nSee that PR for full details.`;
                 const backportTitle = `[Backport ${base}] ${title}`;
                 // Create the PR
+                core_1.info('Creating PR');
                 const { data: createdPr } = yield github.pulls.create({
                     base,
                     body,
@@ -7313,6 +7315,7 @@ function handleMerge(payload, args) {
                 });
                 // Copy over any labels
                 if (labels === null || labels === void 0 ? void 0 : labels.length) {
+                    core_1.info('Copying labels');
                     yield github.issues.addLabels({
                         issue_number: createdPr.number,
                         labels: labelsToCopy,
@@ -7321,6 +7324,7 @@ function handleMerge(payload, args) {
                     });
                 }
                 // Remove the backport <base> label
+                core_1.info('Removing backport request label');
                 yield github.issues.removeLabel({
                     issue_number: options.pullRequestNumber,
                     name: `backport ${base}`,
@@ -7329,7 +7333,8 @@ function handleMerge(payload, args) {
                 });
             }
             catch (error) {
-                core_1.debug(error);
+                core_1.info('errored');
+                core_1.info(error.message);
                 const errorMessage = error.message;
                 yield github.issues.createComment({
                     body: yield getFailedBackportCommentBody({ base, commits, errorMessage, github, head }),
