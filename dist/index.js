@@ -7425,6 +7425,7 @@ function run() {
                 case 'pull_request_target':
                 case 'closed':
                     core.info('Handling close event');
+                    console.log(github_1.context.payload);
                     yield merge_1.handleMerge(github_1.context.payload, args);
                     break;
                 default:
