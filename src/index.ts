@@ -1,4 +1,4 @@
-import core from '@actions/core';
+import * as core from '@actions/core';
 import { context } from '@actions/github';
 import { EventPayloads } from '@octokit/webhooks';
 import { handleMerge } from './handlers/merge';
@@ -17,6 +17,7 @@ async function run(): Promise<void> {
 				break;
 		}
 	} catch (error) {
+		console.log(core);
 		core.setFailed(error.message);
 	}
 }
