@@ -18,19 +18,19 @@ export async function cloneAndConfigure(args: ActionArguments, owner: string, re
 		'add',
 		'botrepo',
 		`https://x-access-token:${args.ghToken}@github.com/${args.username}/${repo}.git`,
-	]);
+	], { cwd: repo });
 
 	await exec('git', [
 		'config',
 		'--global',
 		'user.email',
 		'github-actions[bot]@users.noreply.github.com',
-	]);
+	], { cwd: repo });
 
 	await exec('git', [
 		'config',
 		'--global',
 		'user.name',
 		'github-actions[bot]'
-	]);
+	], { cwd: repo });
 }

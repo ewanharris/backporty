@@ -24,23 +24,23 @@ export async function backportCommits(backport: { base: string, head: string }, 
 
 	await group(`Backporting to ${base}`, async () => {
 		try {
-			await exec('git', [ 'fetch', 'origin' ]);
-			await exec('git', [ 'checkout', `origin/${base}` ]);
-			await exec('git', [ 'checkout', '-b', head ]);
+			await exec('git', [ 'fetch', 'origin' ], { cwd: options.repo });
+			await exec('git', [ 'checkout', `origin/${base}` ], { cwd: options.repo });
+			await exec('git', [ 'checkout', '-b', head ], { cwd: options.repo });
 
 			const patchFile = path.join(__dirname, `${options.repo}.patch`);
 			for (const patch of patches) {
 				await fs.writeFile(patchFile, patch, 'utf8');
-				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ]);
+				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ], { cwd: options.repo });
 				await fs.unlink(patchFile);
 			}
 
 			if (options.push) {
-				await exec('git', [ 'push', 'botrepo', head ]);
+				await exec('git', [ 'push', 'botrepo', head ], { cwd: options.repo });
 			}
 		} catch (error) {
 			warning(error);
-			await exec('git', [ 'am', '--abort' ]);
+			await exec('git', [ 'am', '--abort' ], { cwd: options.repo });
 			throw error;
 		}
 	});

@@ -7485,22 +7485,22 @@ function backportCommits(backport, patches, options) {
         const { base, head } = backport;
         yield core_1.group(`Backporting to ${base}`, () => __awaiter(this, void 0, void 0, function* () {
             try {
-                yield exec_1.exec('git', ['fetch', 'origin']);
-                yield exec_1.exec('git', ['checkout', `origin/${base}`]);
-                yield exec_1.exec('git', ['checkout', '-b', head]);
+                yield exec_1.exec('git', ['fetch', 'origin'], { cwd: options.repo });
+                yield exec_1.exec('git', ['checkout', `origin/${base}`], { cwd: options.repo });
+                yield exec_1.exec('git', ['checkout', '-b', head], { cwd: options.repo });
                 const patchFile = path_1.default.join(__dirname, `${options.repo}.patch`);
                 for (const patch of patches) {
                     yield fs_1.promises.writeFile(patchFile, patch, 'utf8');
-                    yield exec_1.exec('git', ['am', '-3', '--ignore-whitespace', patchFile]);
+                    yield exec_1.exec('git', ['am', '-3', '--ignore-whitespace', patchFile], { cwd: options.repo });
                     yield fs_1.promises.unlink(patchFile);
                 }
                 if (options.push) {
-                    yield exec_1.exec('git', ['push', 'botrepo', head]);
+                    yield exec_1.exec('git', ['push', 'botrepo', head], { cwd: options.repo });
                 }
             }
             catch (error) {
                 core_1.warning(error);
-                yield exec_1.exec('git', ['am', '--abort']);
+                yield exec_1.exec('git', ['am', '--abort'], { cwd: options.repo });
                 throw error;
             }
         }));
@@ -7545,19 +7545,19 @@ function cloneAndConfigure(args, owner, repo) {
             'add',
             'botrepo',
             `https://x-access-token:${args.ghToken}@github.com/${args.username}/${repo}.git`,
-        ]);
+        ], { cwd: repo });
         yield exec_1.exec('git', [
             'config',
             '--global',
             'user.email',
             'github-actions[bot]@users.noreply.github.com',
-        ]);
+        ], { cwd: repo });
         yield exec_1.exec('git', [
             'config',
             '--global',
             'user.name',
             'github-actions[bot]'
-        ]);
+        ], { cwd: repo });
     });
 }
 exports.cloneAndConfigure = cloneAndConfigure;
