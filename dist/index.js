@@ -7427,12 +7427,23 @@ function run() {
         try {
             const args = util_1.validateArgs();
             switch (github_1.context.payload.action) {
-                case 'labeled':
                 case 'closed':
                     core.info('Handling close event');
-                    console.log(github_1.context);
-                    console.log(github_1.context.payload);
-                    yield merge_1.handleMerge(github_1.context.payload, args);
+                    if (github_1.context.payload.pull_request.merged) {
+                        yield merge_1.handleMerge(github_1.context.payload, args);
+                    }
+                    else {
+                        core.info('Ignoring as pull request was not merged');
+                    }
+                    break;
+                case 'labeled':
+                    core.info('Handling labeled event');
+                    if (github_1.context.payload.pull_request.merged) {
+                        yield merge_1.handleMerge(github_1.context.payload, args);
+                    }
+                    else {
+                        // TODO: support testing the backport viability and reporting as a status check
+                    }
                     break;
                 default:
                     core.info(`No handler for ${github_1.context.payload.action}`);
