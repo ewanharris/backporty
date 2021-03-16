@@ -7,7 +7,7 @@ inputs:
     description: Username of the account that will create PRs and host the git repo
   github_token:
     required: true
-    description: Token to use for the GitHub API, you most likely want to pass through ${{ secrets.GITHUB_TOKEN }}
+    description: Token to use for the GitHub API, you most likely want to pass through secrets.GITHUB_TOKEN
 runs:
   using: node12
   main: dist/index.js
