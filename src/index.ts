@@ -8,15 +8,16 @@ async function run(): Promise<void> {
 	try {
 		const args = validateArgs();
 
-		switch (context.eventName) {
-			case 'pull_request_target':
+		switch (context.payload.action) {
+			case 'labeled':
 			case 'closed':
 				core.info('Handling close event');
+				console.log(context);
 				console.log(context.payload);
 				await handleMerge(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
 				break;
 			default:
-				core.info(`No handler for ${context.eventName}`);
+				core.info(`No handler for ${context.payload.action}`);
 				break;
 		}
 	} catch (error) {

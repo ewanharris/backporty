@@ -7426,15 +7426,16 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const args = util_1.validateArgs();
-            switch (github_1.context.eventName) {
-                case 'pull_request_target':
+            switch (github_1.context.payload.action) {
+                case 'labeled':
                 case 'closed':
                     core.info('Handling close event');
+                    console.log(github_1.context);
                     console.log(github_1.context.payload);
                     yield merge_1.handleMerge(github_1.context.payload, args);
                     break;
                 default:
-                    core.info(`No handler for ${github_1.context.eventName}`);
+                    core.info(`No handler for ${github_1.context.payload.action}`);
                     break;
             }
         }
