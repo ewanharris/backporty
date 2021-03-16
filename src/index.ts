@@ -10,14 +10,14 @@ async function run(): Promise<void> {
 
 		switch (context.eventName) {
 			case 'closed':
+				core.info('Handling close event');
 				await handleMerge(context.payload as EventPayloads.WebhookPayloadPullRequest, args);
 				break;
 			default:
-				core.debug(`No handler for ${context.eventName}`);
+				core.info(`No handler for ${context.eventName}`);
 				break;
 		}
 	} catch (error) {
-		console.log(core);
 		core.setFailed(error.message);
 	}
 }

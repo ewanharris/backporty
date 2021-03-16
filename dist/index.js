@@ -7423,15 +7423,15 @@ function run() {
             const args = util_1.validateArgs();
             switch (github_1.context.eventName) {
                 case 'closed':
+                    core.info('Handling close event');
                     yield merge_1.handleMerge(github_1.context.payload, args);
                     break;
                 default:
-                    core.debug(`No handler for ${github_1.context.eventName}`);
+                    core.info(`No handler for ${github_1.context.eventName}`);
                     break;
             }
         }
         catch (error) {
-            console.log(core);
             core.setFailed(error.message);
         }
     });
