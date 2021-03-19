@@ -2,7 +2,6 @@ import { group, warning } from '@actions/core';
 import { exec } from '@actions/exec';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { BackportCommitsOptions } from '../interfaces';
 
 /**
  * Creates a backport PR for each branch requested. Performing the following actions:
@@ -19,7 +18,7 @@ import { BackportCommitsOptions } from '../interfaces';
  * @param options - Options
  * @param github - A pre-configured octokit instance from `getOctokit`
  */
-export async function backportCommits(backport: { base: string, head: string }, patches: string[], options: BackportCommitsOptions): Promise<void> {
+export async function backportCommits(backport: { base: string, head: string }, patches: string[], options: { repo: string, push: boolean }): Promise<void> {
 	const { base, head } = backport;
 
 	await group(`Backporting to ${base}`, async () => {
@@ -28,7 +27,7 @@ export async function backportCommits(backport: { base: string, head: string }, 
 			await exec('git', [ 'checkout', `origin/${base}` ], { cwd: options.repo });
 			await exec('git', [ 'checkout', '-b', head ], { cwd: options.repo });
 
-			const patchFile = path.join(__dirname, `${options.repo}.patch`);
+			const patchFile = path.join(`${options.repo}.patch`);
 			for (const patch of patches) {
 				await fs.writeFile(patchFile, patch, 'utf8');
 				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ], { cwd: options.repo });
