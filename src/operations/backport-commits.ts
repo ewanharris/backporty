@@ -27,7 +27,7 @@ export async function backportCommits(backport: { base: string, head: string }, 
 			await exec('git', [ 'checkout', `origin/${base}` ], { cwd: options.repo });
 			await exec('git', [ 'checkout', '-b', head ], { cwd: options.repo });
 
-			const patchFile = path.join(`${options.repo}.patch`);
+			const patchFile = path.join(options.repo, `${options.repo}.patch`);
 			for (const patch of patches) {
 				await fs.writeFile(patchFile, patch, 'utf8');
 				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ], { cwd: options.repo });
