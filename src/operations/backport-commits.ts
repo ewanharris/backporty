@@ -27,12 +27,12 @@ export async function backportCommits(backport: { base: string, head: string }, 
 			await exec('git', [ 'checkout', `origin/${base}` ], { cwd: options.repo });
 			await exec('git', [ 'checkout', '-b', head ], { cwd: options.repo });
 
-			const patchFile = path.join(options.repo, `${options.repo}.patch`);
-			info(patchFile);
+			const filename = `${options.repo}.patch`;
+			const patchFile = path.join(options.repo, filename);
+
 			for (const patch of patches) {
 				await fs.writeFile(patchFile, patch, 'utf8');
-				info(await fs.readFile(patchFile, 'utf-8'));
-				await exec('git', [ 'am', '-3', '--ignore-whitespace', patchFile ], { cwd: options.repo });
+				await exec('git', [ 'am', '-3', '--ignore-whitespace', filename ], { cwd: options.repo });
 				await fs.unlink(patchFile);
 			}
 
