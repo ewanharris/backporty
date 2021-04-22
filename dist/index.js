@@ -7346,6 +7346,7 @@ function handleBackportCheck(payload, args) {
                     // uhoh
                     continue;
                 }
+                const mdSeperator = '``````````````````````````````';
                 yield github.checks.update({
                     repo,
                     owner,
@@ -7353,7 +7354,10 @@ function handleBackportCheck(payload, args) {
                     conclusion: 'neutral',
                     output: {
                         title: 'Backport failed',
-                        summary: `This PR can not be cleanly backported to "${target}"`
+                        summary: `This PR can not be cleanly backported to "${target}"`,
+                        text: error.diff
+                            ? `Failed diff:\n${mdSeperator}diff\n${error.diff}\n${mdSeperator}`
+                            : undefined
                     }
                 });
             }
@@ -7653,7 +7657,7 @@ function backportCommits(backport, patches, options) {
                 yield exec_1.exec('git', ['fetch', 'origin'], { cwd: options.repo });
                 yield exec_1.exec('git', ['checkout', `origin/${base}`], { cwd: options.repo });
                 yield exec_1.exec('git', ['checkout', '-b', head], { cwd: options.repo });
-                const patchFile = path_1.default.join(__dirname, `${options.repo}.patch`);
+                const patchFile = path_1.default.join(`${options.repo}.patch`);
                 for (const patch of patches) {
                     yield fs_1.promises.writeFile(patchFile, patch, 'utf8');
                     yield exec_1.exec('git', ['am', '-3', '--ignore-whitespace', patchFile], { cwd: options.repo });
@@ -7665,7 +7669,17 @@ function backportCommits(backport, patches, options) {
             }
             catch (error) {
                 core_1.warning(error);
+                let stdout = '';
+                // this is run through execa to get the output directly
+                yield exec_1.exec('git', ['diff'], {
+                    cwd: options.repo,
+                    listeners: {
+                        stdout: (out) => stdout += out.toString()
+                    }
+                });
+                error.diff = stdout;
                 yield exec_1.exec('git', ['am', '--abort'], { cwd: options.repo });
+                // pass through diff output
                 throw error;
             }
         }));
