@@ -1,6 +1,5 @@
-import { debug, info } from '@actions/core';
-import { context, getOctokit } from '@actions/github';
-import { GitHub } from '@actions/github/lib/utils';
+import { info } from '@actions/core';
+import { getOctokit } from '@actions/github';
 import { EventPayloads } from '@octokit/webhooks';
 import { LABEL_REGEXP, STATUS_CHECK_PREFIX } from '../constants';
 import { ActionArguments, BackportCommitsOptions } from '../interfaces';
@@ -126,6 +125,8 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 				continue;
 			}
 
+			const mdSeperator = '``````````````````````````````';
+
 			await github.checks.update({
 				repo,
 				owner,
@@ -133,7 +134,10 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 				conclusion: 'neutral',
 				output: {
 					title: 'Backport failed',
-					summary: `This PR can not be cleanly backported to "${target}"`
+					summary: `This PR can not be cleanly backported to "${target}"`,
+					text: error.diff
+						? `Failed diff:\n${mdSeperator}diff\n${error.diff}\n${mdSeperator}`
+						: undefined
 				}
 			});
 		}

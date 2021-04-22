@@ -47,23 +47,43 @@ describe('backport commits', () => {
 	});
 
 	it('should abort on error', async () => {
+		const diff = `
+index bf455ce..c85706b 100644
+--- a/package.json
++++ b/package.json
+@@ -19,6 +19,7 @@
+		"@actions/core": "^1.2.6",
+		"@actions/exec": "^1.0.4",
+		"@actions/github": "^4.0.0",
++    "execa": "^5.0.0",
+		"p-map": "^4.0.0"
+	},`;
 		const execSpy: jest.SpyInstance = jest.spyOn(exec, 'exec');
+		
 		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		execSpy.mockImplementation((command: string, args: string[]) => {
+		execSpy.mockImplementation((command: string, args: string[], opts: exec.ExecOptions) => {
 			if (args.includes('--ignore-whitespace')) {
 				throw new Error('oh no');
+			}
+
+			if (args.includes('diff')) {
+				if (opts?.listeners?.stdout) {
+					opts.listeners.stdout(Buffer.from(diff));
+				}
 			}
 		}); // don't let the commands run
 		
 		await expect(backportCommits({
 			base: 'foo', head: 'bar'}, ['foo'], { repo: 'test', push: true })
-		).rejects.toMatchObject({ message: 'oh no' });
+		).rejects.toMatchObject({ message: 'oh no', diff });
 
-		expect(execSpy).toHaveBeenCalledTimes(5);
+		expect(execSpy).toHaveBeenCalledTimes(6);
 		expect(execSpy).nthCalledWith(1, 'git', ['fetch', 'origin'], { cwd: 'test' });
 		expect(execSpy).nthCalledWith(2, 'git', ['checkout', 'origin/foo'], { cwd: 'test' });
 		expect(execSpy).nthCalledWith(3, 'git', ['checkout', '-b', 'bar'], { cwd: 'test' });
 		expect(execSpy).nthCalledWith(4, 'git', ['am', '-3', '--ignore-whitespace', 'test.patch'], { cwd: 'test' });
-		expect(execSpy).nthCalledWith(5, 'git', ['am', '--abort'], { cwd: 'test' });
+		expect(execSpy).nthCalledWith(5, 'git', ['diff'], { cwd: 'test', listeners: { stdout: expect.any(Function) } });
+		expect(execSpy).nthCalledWith(6, 'git', ['am', '--abort'], { cwd: 'test' });
+
 	});
 });

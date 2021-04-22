@@ -39,7 +39,19 @@ export async function backportCommits(backport: { base: string, head: string }, 
 			}
 		} catch (error) {
 			warning(error);
+			let stdout = '';
+			// this is run through execa to get the output directly
+			await exec('git', ['diff'], {
+				cwd: options.repo,
+				listeners: {
+					stdout: (out) => stdout += out.toString()
+				}
+			});
+
+			error.diff = stdout;
+
 			await exec('git', [ 'am', '--abort' ], { cwd: options.repo });
+			// pass through diff output
 			throw error;
 		}
 	});
