@@ -5,7 +5,7 @@
   "main": "out/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ewanharris/backporty"
+    "url": "git+https://github.com/ewanharris/tropkcab"
   },
   "scripts": {
     "build": "tsc",

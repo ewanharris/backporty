@@ -1,4 +1,4 @@
-name: topkcab
+name: tropkcab
 description: Backport PRs with just a label
 author: Ewan Harris
 inputs:
