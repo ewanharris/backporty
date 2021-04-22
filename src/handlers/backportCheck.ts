@@ -1,4 +1,4 @@
-import { info } from '@actions/core';
+import { debug, info } from '@actions/core';
 import { getOctokit } from '@actions/github';
 import { EventPayloads } from '@octokit/webhooks';
 import { LABEL_REGEXP, STATUS_CHECK_PREFIX } from '../constants';
@@ -57,6 +57,7 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 		const existingCheck = backportStatusChecks.find(run => run.name === statusCheckName);
 
 		if (existingCheck) {
+			debug(`Updating existing check ${existingCheck.name} (${existingCheck.id})`);
 			const { data: check} = await github.checks.update({
 				owner,
 				repo,
@@ -66,6 +67,7 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 			});
 			statusChecks.push(check);
 		} else {
+			debug(`Creating a new status check ${statusCheckName}`);
 			const { data: check} = await github.checks.create({
 				owner,
 				repo,
@@ -105,6 +107,7 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 			await backportCommits(backport, commits, options);
 
 			if (!statusCheck) {
+				debug(`Status check for ${target} (${checkName}) does not exist. That is not expected`);
 				continue;
 			} 
 			info('Update check');
@@ -121,7 +124,7 @@ export async function handleBackportCheck (payload: EventPayloads.WebhookPayload
 		} catch (error) {
 			info('Update check when failed');
 			if (!statusCheck) {
-				// uhoh
+				debug(`Status check for ${target} (${checkName}) does not exist. That is not expected`);
 				continue;
 			}
 

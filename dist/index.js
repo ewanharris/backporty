@@ -7285,6 +7285,7 @@ function handleBackportCheck(payload, args) {
             const statusCheckName = `${constants_1.STATUS_CHECK_PREFIX} ${matches[1]}`;
             const existingCheck = backportStatusChecks.find(run => run.name === statusCheckName);
             if (existingCheck) {
+                core_1.debug(`Updating existing check ${existingCheck.name} (${existingCheck.id})`);
                 const { data: check } = yield github.checks.update({
                     owner,
                     repo,
@@ -7295,6 +7296,7 @@ function handleBackportCheck(payload, args) {
                 statusChecks.push(check);
             }
             else {
+                core_1.debug(`Creating a new status check ${statusCheckName}`);
                 const { data: check } = yield github.checks.create({
                     owner,
                     repo,
@@ -7326,6 +7328,7 @@ function handleBackportCheck(payload, args) {
                 core_1.info('Backporting commits');
                 yield backport_commits_1.backportCommits(backport, commits, options);
                 if (!statusCheck) {
+                    core_1.debug(`Status check for ${target} (${checkName}) does not exist. That is not expected`);
                     continue;
                 }
                 core_1.info('Update check');
@@ -7343,7 +7346,7 @@ function handleBackportCheck(payload, args) {
             catch (error) {
                 core_1.info('Update check when failed');
                 if (!statusCheck) {
-                    // uhoh
+                    core_1.debug(`Status check for ${target} (${checkName}) does not exist. That is not expected`);
                     continue;
                 }
                 const mdSeperator = '``````````````````````````````';

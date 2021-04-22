@@ -1,4 +1,4 @@
-import { group, info, warning } from '@actions/core';
+import { group, warning } from '@actions/core';
 import { exec } from '@actions/exec';
 import path from 'path';
 import { promises as fs } from 'fs';
