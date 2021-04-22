@@ -7657,9 +7657,11 @@ function backportCommits(backport, patches, options) {
                 yield exec_1.exec('git', ['fetch', 'origin'], { cwd: options.repo });
                 yield exec_1.exec('git', ['checkout', `origin/${base}`], { cwd: options.repo });
                 yield exec_1.exec('git', ['checkout', '-b', head], { cwd: options.repo });
-                const patchFile = path_1.default.join(`${options.repo}.patch`);
+                const patchFile = path_1.default.join(options.repo, `${options.repo}.patch`);
+                core_1.info(patchFile);
                 for (const patch of patches) {
                     yield fs_1.promises.writeFile(patchFile, patch, 'utf8');
+                    core_1.info(yield fs_1.promises.readFile(patchFile, 'utf-8'));
                     yield exec_1.exec('git', ['am', '-3', '--ignore-whitespace', patchFile], { cwd: options.repo });
                     yield fs_1.promises.unlink(patchFile);
                 }
